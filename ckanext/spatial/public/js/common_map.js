@@ -29,11 +29,11 @@
                                     leafletBaseLayerOptions) {
 
       var isHttps = window.location.href.substring(0, 5).toLowerCase() === 'https';
-      var mapConfig = mapConfig || {type: 'stamen'};
-      var leafletMapOptions = leafletMapOptions || {};
-      var leafletBaseLayerOptions = jQuery.extend(leafletBaseLayerOptions, {
-                maxZoom: 18
-                });
+      mapConfig = mapConfig || {type: 'stamen'};
+      leafletMapOptions = leafletMapOptions || {};
+      leafletBaseLayerOptions = jQuery.extend(leafletBaseLayerOptions, {
+        maxZoom: 18
+      });
 
       map = new L.Map(container, leafletMapOptions);
 
@@ -59,8 +59,8 @@
 	// parse layer-specific mapConfig properties into array of layers
 	mapConfig.layerprops = (function (mc) {
 	  var match = [];
-	  var ma;
-	  for (var mprop in mc) {
+	  var ma, mprop;
+	  for (mprop in mc) {
 	    if ((ma = /^(layer_)(\d+)\.(.+)$/.exec(mprop))) {
 	      match.push(ma);
 	    }
@@ -70,15 +70,13 @@
 	// construct a sorted list of layernames
 	mapConfig.layerlist = (function (mc) {
 	  var ll = [];
-	  var layername;
-	  var anum;
-	  var bnum;
+	  var layername, anum, bnum, i;
 	  // get layer-number from layername
 	  function tonum(s) {
 	    return(parseInt(/^layer_(\d+)$/i.exec(s)[1]));
-	  };
+	  }
 	  // build list of layernames
-	  for (var i = 0; i < mc.layerprops.length; i++) {
+	  for (i = 0; i < mc.layerprops.length; i++) {
 	    layername = mc.layerprops[i][1] + mc.layerprops[i][2];
 	    if (ll.indexOf(layername) === -1) {
 	      ll.push(layername);
@@ -92,9 +90,8 @@
 	})(mapConfig);
 	// update mapConfig to contain strucutred layer-properties
 	mapConfig = (function (mc) {
-	  var l;
-	  var newkey;
-	  for (var i = 0; i < mc.layerprops.length; i++) {
+	  var l, newkey, i;
+	  for (i = 0; i < mc.layerprops.length; i++) {
 	    l = mc.layerprops[i];
 	    newkey = l[1] + l[2]; 
 	    mc[newkey] = mc[newkey] || {};
@@ -115,9 +112,10 @@
        mapConfig.layerlist.forEach(function (lname) {
 	 var url = mapConfig[lname].url;
 	 var options = {};
+	 var prop;
 	 // extract layeroptions
 	 delete mapConfig[lname].url;
-	 for (var prop in mapConfig[lname]) {
+	 for (prop in mapConfig[lname]) {
 	   if (mapConfig[lname].hasOwnProperty(prop)) {
 	     options[prop] = mapConfig[lname][prop];
 	   }
