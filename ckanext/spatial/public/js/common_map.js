@@ -109,19 +109,21 @@
       }
 
      if (mapConfig.type === 'multilayer') {
+       var baseLayers = {};
        mapConfig.layerlist.forEach(function (lname) {
 	 var url = mapConfig[lname].url;
 	 var options = {};
 	 var prop;
-	 // extract layeroptions
+       	 // extract layeroptions
 	 delete mapConfig[lname].url;
 	 for (prop in mapConfig[lname]) {
 	   if (mapConfig[lname].hasOwnProperty(prop)) {
 	     options[prop] = mapConfig[lname][prop];
 	   }
+         baseLayers[lname] = new L.TileLayer(url, options);
 	 }
-     	 map.addLayer(new L.TileLayer(url, options));
        });
+       L.control.layers(baseLayers).addTo(map);
      } else {
        var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
        map.addLayer(baseLayer);
