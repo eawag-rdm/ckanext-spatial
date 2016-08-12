@@ -49,14 +49,16 @@
       leafletBaseLayerOptions.handle = mapConfig['mapbox.map_id'];
       leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
       leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Data: <a href="http://osm.org/copyright" target="_blank">OpenStreetMap</a>, Design: <a href="http://mapbox.com/about/maps" target="_blank">MapBox</a>';
+      
     } else if (mapConfig.type == 'custom') {
       // Custom XYZ layer
       baseLayerUrl = mapConfig['custom.url'];
       if (mapConfig.subdomains) leafletBaseLayerOptions.subdomains = mapConfig.subdomains;
       if (mapConfig.tms) leafletBaseLayerOptions.tms = mapConfig.tms;
       leafletBaseLayerOptions.attribution = mapConfig.attribution;
-    // Custom multi-layer map
-    } else if (mapConfig.type === 'multilayer') {   
+    
+    } else if (mapConfig.type === 'multilayer') {
+      // Custom multi-layer map
       // parse layer-specific mapConfig properties into array of layers
       mapConfig.layers = (function(mc) {
 	var ma, mprop, layeridx, layerlist;
@@ -98,14 +100,16 @@
 	});
 	return(L.control.layers(baseLayers));
       })(mapConfig.layers).addTo(map);
+      
+      
     } else {
       // Default to Stamen base map
       baseLayerUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
 		       leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
       leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Map tiles by <a href="http://stamen.com">Stamen Design</a> (<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>). Data by <a href="http://openstreetmap.org">OpenStreetMap</a> (<a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>)';
-      var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
-      map.addLayer(baseLayer);
     }
+    var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
+    map.addLayer(baseLayer);
     return map;
   };
 })(this.ckan, this.jQuery);
