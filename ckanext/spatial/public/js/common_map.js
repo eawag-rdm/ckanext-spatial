@@ -24,110 +24,88 @@
    * Returns a Leaflet map object.
    */
   ckan.commonLeafletMap = function (container,
-                                    mapConfig,
+				    mapConfig,
                                     leafletMapOptions,
                                     leafletBaseLayerOptions) {
 
-      var isHttps = window.location.href.substring(0, 5).toLowerCase() === 'https';
-      mapConfig = mapConfig || {type: 'stamen'};
-      leafletMapOptions = leafletMapOptions || {};
-      leafletBaseLayerOptions = jQuery.extend(leafletBaseLayerOptions, {
-        maxZoom: 18
-      });
+    var isHttps = window.location.href.substring(0, 5).toLowerCase() === 'https';
+    mapConfig = mapConfig || {type: 'stamen'};
+    leafletMapOptions = leafletMapOptions || {};
+    leafletBaseLayerOptions = jQuery.extend(leafletBaseLayerOptions, {
+      maxZoom: 18
+    });
 
-      map = new L.Map(container, leafletMapOptions);
+    var map = new L.Map(container, leafletMapOptions);
+    var baseLayerUrl;
 
-      if (mapConfig.type == 'mapbox') {
-          // MapBox base map
-          if (!mapConfig['mapbox.map_id'] || !mapConfig['mapbox.access_token']) {
-            throw '[CKAN Map Widgets] You need to provide a map ID ([account].[handle]) and an access token when using a MapBox layer. ' +
-                  'See http://www.mapbox.com/developers/api-overview/ for details';
-          }
-
-          baseLayerUrl = '//{s}.tiles.mapbox.com/v4/' + mapConfig['mapbox.map_id'] + '/{z}/{x}/{y}.png?access_token=' + mapConfig['mapbox.access_token'];
-          leafletBaseLayerOptions.handle = mapConfig['mapbox.map_id'];
-          leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
-          leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Data: <a href="http://osm.org/copyright" target="_blank">OpenStreetMap</a>, Design: <a href="http://mapbox.com/about/maps" target="_blank">MapBox</a>';
-      } else if (mapConfig.type == 'custom') {
-          // Custom XYZ layer
-          baseLayerUrl = mapConfig['custom.url'];
-          if (mapConfig.subdomains) leafletBaseLayerOptions.subdomains = mapConfig.subdomains;
-          if (mapConfig.tms) leafletBaseLayerOptions.tms = mapConfig.tms;
-          leafletBaseLayerOptions.attribution = mapConfig.attribution;
-     // Custom multi-layer map
-     } else if (mapConfig.type === 'multilayer') {   
-	// parse layer-specific mapConfig properties into array of layers
-	mapConfig.layerprops = (function (mc) {
-	  var match = [];
-	  var ma, mprop;
-	  for (mprop in mc) {
-	    if ((ma = /^(layer_)(\d+)\.(.+)$/.exec(mprop))) {
-	      match.push(ma);
-	    }
-	  }
-	  return(match);
-	})(mapConfig);
-	// construct a sorted list of layernames
-	mapConfig.layerlist = (function (mc) {
-	  var ll = [];
-	  var layername, anum, bnum, i;
-	  // get layer-number from layername
-	  function tonum(s) {
-	    return(parseInt(/^layer_(\d+)$/i.exec(s)[1]));
-	  }
-	  // build list of layernames
-	  for (i = 0; i < mc.layerprops.length; i++) {
-	    layername = mc.layerprops[i][1] + mc.layerprops[i][2];
-	    if (ll.indexOf(layername) === -1) {
-	      ll.push(layername);
-	    }
-	  }
-	  // sort layerlist
-	  ll = ll.sort(function (a, b) {
-	    return(tonum(a) - tonum(b));
-	  });
-	  return(ll);
-	})(mapConfig);
-	// update mapConfig to contain strucutred layer-properties
-	mapConfig = (function (mc) {
-	  var l, newkey, i;
-	  for (i = 0; i < mc.layerprops.length; i++) {
-	    l = mc.layerprops[i];
-	    newkey = l[1] + l[2]; 
-	    mc[newkey] = mc[newkey] || {};
-	    mc[newkey][l[3]] = mc[l[0]];
-	    delete mc[l[0]];
-	  }
-	  delete mc.layerprops;
-	  return(mc);
-	})(mapConfig);
-      } else {
-          // Default to Stamen base map
-          baseLayerUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
-          leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
-          leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Map tiles by <a href="http://stamen.com">Stamen Design</a> (<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>). Data by <a href="http://openstreetmap.org">OpenStreetMap</a> (<a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>)';
+    if (mapConfig.type == 'mapbox') {
+      // MapBox base map
+      if (!mapConfig['mapbox.map_id'] || !mapConfig['mapbox.access_token']) {
+        throw '[CKAN Map Widgets] You need to provide a map ID ([account].[handle]) and an access token when using a MapBox layer. ' +
+	  'See http://www.mapbox.com/developers/api-overview/ for details';
       }
-
-     if (mapConfig.type === 'multilayer') {
-       var baseLayers = {};
-       mapConfig.layerlist.forEach(function (lname) {
-	 var url = mapConfig[lname].url;
-	 var options = {};
-	 var prop;
-       	 // extract layeroptions
-	 delete mapConfig[lname].url;
-	 for (prop in mapConfig[lname]) {
-	   if (mapConfig[lname].hasOwnProperty(prop)) {
-	     options[prop] = mapConfig[lname][prop];
-	   }
-         baseLayers[lname] = new L.TileLayer(url, options);
-	 }
-       });
-       L.control.layers(baseLayers).addTo(map);
-     } else {
-       var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
-       map.addLayer(baseLayer);
-     }
-     return map;
+    
+      baseLayerUrl = '//{s}.tiles.mapbox.com/v4/' + mapConfig['mapbox.map_id'] + '/{z}/{x}/{y}.png?access_token=' + mapConfig['mapbox.access_token'];
+      leafletBaseLayerOptions.handle = mapConfig['mapbox.map_id'];
+      leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
+      leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Data: <a href="http://osm.org/copyright" target="_blank">OpenStreetMap</a>, Design: <a href="http://mapbox.com/about/maps" target="_blank">MapBox</a>';
+    } else if (mapConfig.type == 'custom') {
+      // Custom XYZ layer
+      baseLayerUrl = mapConfig['custom.url'];
+      if (mapConfig.subdomains) leafletBaseLayerOptions.subdomains = mapConfig.subdomains;
+      if (mapConfig.tms) leafletBaseLayerOptions.tms = mapConfig.tms;
+      leafletBaseLayerOptions.attribution = mapConfig.attribution;
+    // Custom multi-layer map
+    } else if (mapConfig.type === 'multilayer') {   
+      // parse layer-specific mapConfig properties into array of layers
+      mapConfig.layers = (function(mc) {
+	var ma, mprop, layeridx, layerlist;
+	var layers = {};
+	// collect layer properties from config
+	for (mprop in mc) {
+	  if ((ma = /^layer_(\d+)\.(.+)$/.exec(mprop))) {
+	    if (! layers.hasOwnProperty(ma[1])) {
+	      // there is no object yet for this layer yet
+	      layers[ma[1]] = {};
+	    }
+	    layers[ma[1]][ma[2]] = mc[ma[0]];
+	  }
+	}
+	// sort layers
+	layeridx = Object.keys(layers);
+	layeridx.sort(function (a, b) {
+	  return(parseInt(a) - parseInt(b));
+	});
+	layerlist = layeridx.map(function (idx) {
+	  var url;
+	  var label;
+	  url = layers[idx]['url'];
+	  delete layers[idx]['url'];
+	  label = layers[idx]['label'] || 'layer_' + idx;
+	  delete layers[idx]['label'];
+	  return({'url': layers[idx]['url'],
+	    'label': label,
+	    'options': layers[idx]
+	  });
+	});
+	return(layerlist);
+      })(mapConfig);
+      // create layercontrol
+      (function (layerlist) {
+	var baseLayers = {};
+	layerlist.forEach(function (val) {
+	  baseLayers[val['label']] = new L.TileLayer(val['url'], val['options']);
+	});
+	return(L.control.layers(baseLayers));
+      })(mapConfig.layers).addTo(map);
+    } else {
+      // Default to Stamen base map
+      baseLayerUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
+		       leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
+      leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Map tiles by <a href="http://stamen.com">Stamen Design</a> (<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>). Data by <a href="http://openstreetmap.org">OpenStreetMap</a> (<a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>)';
+      var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
+      map.addLayer(baseLayer);
+    }
+    return map;
   };
 })(this.ckan, this.jQuery);
