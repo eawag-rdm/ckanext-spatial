@@ -36,7 +36,7 @@
     });
 
     var map = new L.Map(container, leafletMapOptions);
-    var baseLayerUrl;
+    var baseLayer, baseLayerUrl;
 
     if (mapConfig.type == 'mapbox') {
       // MapBox base map
@@ -49,6 +49,7 @@
       leafletBaseLayerOptions.handle = mapConfig['mapbox.map_id'];
       leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
       leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Data: <a href="http://osm.org/copyright" target="_blank">OpenStreetMap</a>, Design: <a href="http://mapbox.com/about/maps" target="_blank">MapBox</a>';
+      baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
       
     } else if (mapConfig.type == 'custom') {
       // Custom XYZ layer
@@ -56,7 +57,7 @@
       if (mapConfig.subdomains) leafletBaseLayerOptions.subdomains = mapConfig.subdomains;
       if (mapConfig.tms) leafletBaseLayerOptions.tms = mapConfig.tms;
       leafletBaseLayerOptions.attribution = mapConfig.attribution;
-    
+      baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);    
     } else if (mapConfig.type === 'multilayer') {
       // Custom multi-layer map
       // parse layer-specific mapConfig properties into array of layers
@@ -85,7 +86,7 @@
 	  delete layers[idx]['url'];
 	  label = layers[idx]['label'] || 'layer_' + idx;
 	  delete layers[idx]['label'];
-	  return({'url': layers[idx]['url'],
+	  return({'url': url,
 	    'label': label,
 	    'options': layers[idx]
 	  });
@@ -100,15 +101,16 @@
 	});
 	return(L.control.layers(baseLayers));
       })(mapConfig.layers).addTo(map);
-      
+      baseLayerUrl = mapConfig.layers[0]['url'];
+      leafletBaseLayerOptions = mapConfig.layers[0]['options'];
       
     } else {
       // Default to Stamen base map
       baseLayerUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
 		       leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
       leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Map tiles by <a href="http://stamen.com">Stamen Design</a> (<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>). Data by <a href="http://openstreetmap.org">OpenStreetMap</a> (<a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>)';
-    }
-    var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
+          }
+    baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
     map.addLayer(baseLayer);
     return map;
   };
