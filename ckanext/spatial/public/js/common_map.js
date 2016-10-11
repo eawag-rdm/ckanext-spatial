@@ -99,7 +99,7 @@
 	layerlist.forEach(function (val) {
 	  baseLayers[val['label']] = new L.TileLayer(val['url'], val['options']);
 	});
-	return(L.control.layers(baseLayers));
+	return(L.control.layers(baseLayers, undefined, {position: "bottomright"}));
       })(mapConfig.layers).addTo(map);
       baseLayerUrl = mapConfig.layers[0]['url'];
       leafletBaseLayerOptions = mapConfig.layers[0]['options'];
