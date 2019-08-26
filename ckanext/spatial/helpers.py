@@ -3,6 +3,7 @@ from pylons import config
 
 from ckan import plugins as p
 from ckan.lib import helpers as h
+import re
 
 log = logging.getLogger(__name__)
 
@@ -64,5 +65,22 @@ def get_common_map_config():
         Returns a dict with all configuration options related to the common
         base map (ie those starting with 'ckanext.spatial.common_map.')
     '''
+    def modify_config_keys(confdict, changes):
+        newitems = []
+        removeitems = []
+        for k, v in confdict.iteritems():
+            for c in changes:
+                print(c)
+                newkey = c[0].sub(c[1], k)
+                print(newkey)
+                if newkey != k:
+                    newitems.append({newkey: v})
+                    removeitems.append(k)
+        for k in removeitems: del confdict[k]
+        for i in newitems: confdict.update(i)
+        
+    changes = [(re.compile('minzoom'), 'minZoom')]
     namespace = 'ckanext.spatial.common_map.'
-    return dict([(k.replace(namespace, ''), v) for k, v in config.iteritems() if k.startswith(namespace)])
+    mapconfig = dict([(k.replace(namespace, ''), v) for k, v in config.iteritems() if k.startswith(namespace)])
+    modify_config_keys(mapconfig, changes)    
+    return mapconfig
