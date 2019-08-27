@@ -70,9 +70,7 @@ def get_common_map_config():
         removeitems = []
         for k, v in confdict.iteritems():
             for c in changes:
-                print(c)
                 newkey = c[0].sub(c[1], k)
-                print(newkey)
                 if newkey != k:
                     newitems.append({newkey: v})
                     removeitems.append(k)
