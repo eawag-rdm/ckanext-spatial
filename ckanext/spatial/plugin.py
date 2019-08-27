@@ -5,8 +5,6 @@ from logging import getLogger
 
 from pylons import config
 
-
-
 from ckan import plugins as p
 
 from ckan.lib.helpers import json
@@ -51,7 +49,8 @@ def package_error_summary(error_dict):
     summary = {}
     for key, error in error_dict.iteritems():
         if key == 'resources':
-            summary[p.toolkit._('Resources')] = p.toolkit._('Package resource(s) invalid')
+            summary[p.toolkit._('Resources')] = p.toolkit._(
+                'Package resource(s) invalid')
         elif key == 'extras':
             summary[p.toolkit._('Extras')] = p.toolkit._('Missing Value')
         elif key == 'extras_validation':
@@ -176,6 +175,7 @@ class SpatialQuery(p.SingletonPlugin):
 
     def before_index(self, pkg_dict):
         import shapely
+        import shapely.geometry
 
         if pkg_dict.get('extras_spatial', None) and self.search_backend in ('solr', 'solr-spatial-field'):
             try:
