@@ -35,6 +35,8 @@
                 maxZoom: 18
                 });
 
+      var baseLayer;
+      
       map = new L.Map(container, leafletMapOptions);
 
       if (mapConfig.type == 'mapbox') {
@@ -48,98 +50,109 @@
           leafletBaseLayerOptions.handle = mapConfig['mapbox.map_id'];
           leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
           leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Data: <a href="http://osm.org/copyright" target="_blank">OpenStreetMap</a>, Design: <a href="http://mapbox.com/about/maps" target="_blank">MapBox</a>';
+
+          baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
+	  map.addLayer(baseLayer);
+
       } else if (mapConfig.type == 'custom') {
           // Custom XYZ layer
           baseLayerUrl = mapConfig['custom.url'];
           if (mapConfig.subdomains) leafletBaseLayerOptions.subdomains = mapConfig.subdomains;
           if (mapConfig.tms) leafletBaseLayerOptions.tms = mapConfig.tms;
           leafletBaseLayerOptions.attribution = mapConfig.attribution;
-       // Custom multi-layer map
-       } else if (mapConfig.type === 'multilayer') {   
-	  // parse layer-specific mapConfig properties into array of layers
-	  mapConfig.layerprops = (function (mc) {
-	    var match = [];
-	    var ma, mprop;
-	    for (mprop in mc) {
-	      if ((ma = /^(layer_)(\d+)\.(.+)$/.exec(mprop))) {
-	        match.push(ma);
-	      }
-	    }
-	    return(match);
-	  })(mapConfig);
-	  // construct a sorted list of layernames
-	  mapConfig.layerlist = (function (mc) {
-	    var ll = [];
-	    var layername, anum, bnum, i;
-	    // get layer-number from layername
-	    function tonum(s) {
-	      return(parseInt(/^layer_(\d+)$/i.exec(s)[1]));
-	    }
-	    // build list of layernames
-	    for (i = 0; i < mc.layerprops.length; i++) {
-	      layername = mc.layerprops[i][1] + mc.layerprops[i][2];
-	      if (ll.indexOf(layername) === -1) {
-	        ll.push(layername);
-	      }
-	    }
-	    // sort layerlist
-	    ll = ll.sort(function (a, b) {
-	      return(tonum(a) - tonum(b));
-	    });
-	    return(ll);
-	  })(mapConfig);
-	  // update mapConfig to contain strucutred layer-properties
-	  mapConfig = (function (mc) {
-	    var l, newkey, i;
-	    for (i = 0; i < mc.layerprops.length; i++) {
-	      l = mc.layerprops[i];
-	      newkey = l[1] + l[2]; 
-	      mc[newkey] = mc[newkey] || {};
-	      mc[newkey][l[3]] = mc[l[0]];
-	      delete mc[l[0]];
-	    }
-	    delete mc.layerprops;
-	    return(mc);
-	  })(mapConfig);
-       } else if (mapConfig.type == 'wms') {
 
-         baseLayerUrl = mapConfig['wms.url'];
-         wmsOptions = {}
-         wmsOptions['layers'] = mapConfig['wms.layers'];
-         wmsOptions['styles'] = mapConfig['wms.styles'] || '';
-         wmsOptions['format'] = mapConfig['wms.format'] || 'image/png';
-         if(mapConfig['wms.srs'] || mapConfig['wms.crs']) {
-           wmsOptions['crs'] = mapConfig['wms.srs'] || mapConfig['wms.crs'];
-         }
-         wmsOptions['version'] = mapConfig['wms.version'] || '1.1.1';  
-        } else {
-            // Default to Stamen base map
-            baseLayerUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
-            leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
-            leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Map tiles by <a href="http://stamen.com">Stamen Design</a> (<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>). Data by <a href="http://openstreetmap.org">OpenStreetMap</a> (<a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>)';
-        }
+          baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
+	  map.addLayer(baseLayer);
 
-       if (mapConfig.type === 'multilayer') {
-         mapConfig.layerlist.forEach(function (lname) {
-	   var url = mapConfig[lname].url;
-	   var options = {};
-	   var prop;
-	   // extract layeroptions
-	   delete mapConfig[lname].url;
-	   for (prop in mapConfig[lname]) {
-	     if (mapConfig[lname].hasOwnProperty(prop)) {
-	       options[prop] = mapConfig[lname][prop];
-	     }
-	   }
-     	   map.addLayer(new L.TileLayer(url, options));
-         });
-       } else if (mapConfig.type == 'wms') {
-           baseLayer = new L.TileLayer.WMS(baseLayerUrl, wmsOptions);
-           map.addLayer(baseLayer);
-       } else {
-         var baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
-         map.addLayer(baseLayer);
-       }
-       return map;
+      } else if (mapConfig.type == 'wms') {
+          baseLayerUrl = mapConfig['wms.url'];
+          wmsOptions = {}
+          wmsOptions['layers'] = mapConfig['wms.layers'];
+          wmsOptions['styles'] = mapConfig['wms.styles'] || '';
+          wmsOptions['format'] = mapConfig['wms.format'] || 'image/png';
+          if(mapConfig['wms.srs'] || mapConfig['wms.crs']) {
+              wmsOptions['crs'] = mapConfig['wms.srs'] || mapConfig['wms.crs'];
+          }
+          wmsOptions['version'] = mapConfig['wms.version'] || '1.1.1';
+          
+          baseLayer = new L.TileLayer.WMS(baseLayerUrl, wmsOptions);
+	  map.addLayer(baseLayer);
+	
+      //Custom multi-layer map
+      } else if (mapConfig.type === 'multilayer') {   
+          // parse layer-specific mapConfig properties into array of layers
+      	  mapConfig.layerprops = (function (mc) {
+      	      var match = [];
+      	      var ma, mprop;
+      	      for (mprop in mc) {
+      	          if ((ma = /^(layer_)(\d+)\.(.+)$/.exec(mprop))) {
+      	              match.push(ma);
+      	          }
+      	      }
+      	      return(match);
+      	  })(mapConfig);
+      	  // construct a sorted list of layernames
+      	  mapConfig.layerlist = (function (mc) {
+      	      var ll = [];
+      	      var layername, anum, bnum, i;
+      	      // get layer-number from layername
+      	      function tonum(s) {
+      	          return(parseInt(/^layer_(\d+)$/i.exec(s)[1]));
+      	      }
+      	      // build list of layernames
+      	      for (i = 0; i < mc.layerprops.length; i++) {
+      	          layername = mc.layerprops[i][1] + mc.layerprops[i][2];
+      	          if (ll.indexOf(layername) === -1) {
+      	              ll.push(layername);
+      	          }
+      	      }
+      	      // sort layerlist
+      	      ll = ll.sort(function (a, b) {
+      	          return(tonum(a) - tonum(b));
+      	      });
+      	      return(ll);
+      	  })(mapConfig);
+      	  // update mapConfig to contain strucutred layer-properties
+      	  mapConfig = (function (mc) {
+      	      var l, newkey, i;
+      	      for (i = 0; i < mc.layerprops.length; i++) {
+      	          l = mc.layerprops[i];
+      	          newkey = l[1] + l[2]; 
+      	          mc[newkey] = mc[newkey] || {};
+      	          mc[newkey][l[3]] = mc[l[0]];
+      	          delete mc[l[0]];
+      	      }
+      	      delete mc.layerprops;
+      	      return(mc);
+      	  })(mapConfig);
+	  mapConfig.layerlist.forEach(function (lname) {
+	      var url = mapConfig[lname].url;
+	      var options = {};
+	      var prop;
+	      // extract layeroptions
+	      delete mapConfig[lname].url;
+	      for (prop in mapConfig[lname]) {
+	          if (mapConfig[lname].hasOwnProperty(prop)) {
+	              options[prop] = mapConfig[lname][prop];
+	          }
+	      }
+	      if (options['bounds']) {
+	          options['bounds'] = JSON.parse(options['bounds']);
+	      }
+              map.addLayer(new L.TileLayer(url, options));
+	  });
+
+      // Default to Stamen base map
+      } else {
+          baseLayerUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
+          leafletBaseLayerOptions.subdomains = mapConfig.subdomains || 'abcd';
+          leafletBaseLayerOptions.attribution = mapConfig.attribution || 'Map tiles by <a href="http://stamen.com">Stamen Design</a> (<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>). Data by <a href="http://openstreetmap.org">OpenStreetMap</a> (<a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>)';
+
+          baseLayer = new L.TileLayer(baseLayerUrl, leafletBaseLayerOptions);
+	  map.addLayer(baseLayer);
+      }
+
+      return map;
   };
+ 
 })(this.ckan, this.jQuery);
