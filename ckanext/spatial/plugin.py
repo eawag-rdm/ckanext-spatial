@@ -180,19 +180,23 @@ class SpatialQuery(p.SingletonPlugin):
         if pkg_dict.get('extras_spatial', None) and self.search_backend in ('solr', 'solr-spatial-field'):
             try:
                 geometry = json.loads(pkg_dict['extras_spatial'])
+                spatial_type = geometry['type']
+                coords = geometry['coordinates']
             except ValueError, e:
-                log.error('Geometry not valid GeoJSON, not indexing')
+                log.error('Geometry not valid GeoJSON: Not indexing')
+                return pkg_dict
+            except KeyError, e:
+                log.error("Geometry doesn't have 'type' and/or 'coordinates' field: Not indexing")
                 return pkg_dict
 
             if self.search_backend == 'solr':
                 # Only bbox supported for this backend
-                if not (geometry['type'] == 'Polygon'
-                   and len(geometry['coordinates']) == 1
-                   and len(geometry['coordinates'][0]) == 5):
+                if not (spatial_type == 'Polygon'
+                   and len(coords) == 1
+                   and len(coords[0]) == 5):
                     log.error('Solr backend only supports bboxes (Polygons with 5 points), ignoring geometry {0}'.format(pkg_dict['extras_spatial']))
                     return pkg_dict
 
-                coords = geometry['coordinates']
                 pkg_dict['maxy'] = max(coords[0][2][1], coords[0][0][1])
                 pkg_dict['miny'] = min(coords[0][2][1], coords[0][0][1])
                 pkg_dict['maxx'] = max(coords[0][2][0], coords[0][0][0])
@@ -204,20 +208,20 @@ class SpatialQuery(p.SingletonPlugin):
                 wkt = None
 
                 # Check potential problems with bboxes
-                if geometry['type'] == 'Polygon' \
-                   and len(geometry['coordinates']) == 1 \
-                   and len(geometry['coordinates'][0]) == 5:
+                if spatial_type == 'Polygon' \
+                   and len(coords) == 1 \
+                   and len(coords[0]) == 5:
 
                     # Check wrong bboxes (4 same points)
-                    xs = [p[0] for p in geometry['coordinates'][0]]
-                    ys = [p[1] for p in geometry['coordinates'][0]]
+                    xs = [p[0] for p in coords[0]]
+                    ys = [p[1] for p in coords[0]]
 
                     if xs.count(xs[0]) == 5 and ys.count(ys[0]) == 5:
                         wkt = 'POINT({x} {y})'.format(x=xs[0], y=ys[0])
                     else:
                         # Check if coordinates are defined counter-clockwise,
                         # otherwise we'll get wrong results from Solr
-                        lr = shapely.geometry.polygon.LinearRing(geometry['coordinates'][0])
+                        lr = shapely.geometry.polygon.LinearRing(coords[0])
                         if not lr.is_ccw:
                             lr.coords = list(lr.coords)[::-1]
                         polygon = shapely.geometry.polygon.Polygon(lr)
@@ -231,7 +235,6 @@ class SpatialQuery(p.SingletonPlugin):
                     wkt = shape.wkt
 
                 pkg_dict['spatial_geom'] = wkt
-
 
         return pkg_dict
 
