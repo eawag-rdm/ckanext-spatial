@@ -31,11 +31,14 @@
       var isHttps = window.location.href.substring(0, 5).toLowerCase() === 'https';
       mapConfig = mapConfig || {type: 'stamen'};
       leafletMapOptions = leafletMapOptions || {};
+      leafletMapOptions = jQuery.extend(leafletMapOptions, {scrollWheelZoom: false});
       leafletBaseLayerOptions = jQuery.extend(leafletBaseLayerOptions, {
         maxZoom: 18
       });
-
+    
       map = new L.Map(container, leafletMapOptions);
+      map.on('focus', function() { map.scrollWheelZoom.enable(); });
+      map.on('blur', function() { map.scrollWheelZoom.disable(); });
 
       if (mapConfig.type == 'mapbox') {
           // MapBox base map
