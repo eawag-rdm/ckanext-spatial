@@ -188,6 +188,9 @@ class SpatialQuery(p.SingletonPlugin):
             except KeyError, e:
                 log.error("Geometry doesn't have 'type' and/or 'coordinates' field: Not indexing")
                 return pkg_dict
+            except:
+                log.error("Could not read geometry")
+                return pkg_dict
 
             if self.search_backend == 'solr':
                 # Only bbox supported for this backend
